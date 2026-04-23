@@ -9,24 +9,26 @@ const intl = new Intl.NumberFormat("en-US", {
 
 function Order() {
   const [pizzaTypes, setPizzaTypes] = useState([]);
-  const [pizzaType, setPizzaType] = useState("peperonni");
+  const [pizzaType, setPizzaType] = useState("");
   const [pizzaSize, setPizzaSize] = useState("S");
-  const loading = ([loading, setLoading] = useState(true));
+  const [loading, setLoading] = useState(true);
 
-  let price, selectedPizza;
-
-  if (!loading) {
-    selectedPizza = pizzaTypes.find((pizza) => pizzaType === pizza.id);
-  }
+  let price;
+  const selectedPizza = pizzaTypes.find((pizza) => pizzaType === pizza.id);
 
   async function fetchPizzaTypes() {
     const PizzaRes = await fetch("api/pizzas");
-    const pizzaJson = await Pizza.json();
+    const pizzaJson = await PizzaRes.json();
     setPizzaTypes(pizzaJson);
+    if (pizzaJson.length > 0) {
+      setPizzaType(pizzaJson[0].id);
+    }
     setLoading(false);
   }
 
-  console.log(pizzaType, pizzaSize);
+  useEffect(() => {
+    fetchPizzaTypes();
+  }, [pizzaSize]);
   return (
     <div className="order">
       <h2>Create Order</h2>
@@ -39,9 +41,11 @@ function Order() {
               name="pizza-type"
               value={pizzaType}
             >
-              <option value="peperonni">The Peperonni Pizza</option>
-              <option value="hawaiian">The Hawaiian Pizza</option>
-              <option value="big_meat">The Big Meat Pizza</option>
+              {pizzaTypes.map((pizza) => (
+                <option value={pizza.id} key={pizza.id}>
+                  {pizza.name}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -84,12 +88,18 @@ function Order() {
           </div>
           <button type="submit">Add to Card</button>
           <div className="order-pizza">
-            <Pizza
-              name="pepperoni"
-              description="Another pep pizza"
-              image="/public/pizzas/pepperoni.webp"
-            />
-            <p>$13.37</p>
+            {selectedPizza ? (
+              <>
+                <Pizza
+                  name={selectedPizza.name}
+                  description={selectedPizza.description}
+                  image={selectedPizza.image}
+                />
+                <p>$13.37</p>
+              </>
+            ) : (
+              <p>{loading ? "Loading pizza..." : "No pizza selected."}</p>
+            )}
           </div>
         </div>
       </form>
